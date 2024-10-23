@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semester Project Submission System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select {
+            width: calc(100% - 22px);
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        select {
+            width: 100%;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #teacherProjects {
+            margin-top: 20px;
+        }
+
+        #teacherProjects div {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #teacherProjects div h3 {
+            margin-top: 0;
+        }
+
+        #teacherProjects div p {
+            margin: 5px 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Semester Project Submission System</h1>
+        <div id="login">
+            <div id="loginForm">
+                <label for="username">Username:</label>
+                <input type="text" id="username" required>
+                <br>
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+                <br>
+                <label for="userType">Login as:</label>
+                <select id="userType">
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+                <br>
+                <button type="button" id="loginButton">Login</button>
+            </div>
+        </div>
+        <div id="dashboard" style="display: none;">
+            <!-- Student Submission Form -->
+            <div id="studentForm" style="display: none;">
+                <h2>Student Submission</h2>
+                <form id="projectSubmissionForm">
+                    <label for="class">Class:</label>
+                    <input type="text" id="class" required>
+                    <br>
+                    <label for="branch">Branch:</label>
+                    <select id="branch" required>
+                        <option value="Computer">Computer</option>
+                        <option value="DS">DS</option>
+                        <option value="AIML">AIML</option>
+                        <option value="ENTC">ENTC</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Civil">Civil</option>
+                        <option value="Mechanical">Mechanical</option>
+                    </select>
+                    <br>
+                    <label for="abstract1Title">Abstract Title 1:</label>
+                    <input type="text" id="abstract1Title" required>
+                    <label for="abstract1File">Upload Abstract 1 (PDF):</label>
+                    <input type="file" id="abstract1File" accept=".pdf" required>
+                    <br>
+                    <label for="abstract2Title">Abstract Title 2:</label>
+                    <input type="text" id="abstract2Title" required>
+                    <label for="abstract2File">Upload Abstract 2 (PDF):</label>
+                    <input type="file" id="abstract2File" accept=".pdf" required>
+                    <br>
+                    <label for="abstract3Title">Abstract Title 3:</label>
+                    <input type="text" id="abstract3Title" required>
+                    <label for="abstract3File">Upload Abstract 3 (PDF):</label>
+                    <input type="file" id="abstract3File" accept=".pdf" required>
+                    <br>
+                    <button type="button" id="submitProjectButton">Submit Project</button>
+                </form>
+            </div>
+            <!-- Teacher Access Form -->
+            <div id="teacherForm" style="display: none;">
+                <h2>Teacher Access</h2>
+                <label for="branchSelect">Select Branch:</label>
+                <select id="branchSelect" onchange="getProjectsByBranch()">
+                    <option value="Computer">Computer</option>
+                    <option value="DS">DS</option>
+                    <option value="AIML">AIML</option>
+                    <option value="ENTC">ENTC</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Civil">Civil</option>
+                    <option value="Mechanical">Mechanical</option>
+                </select>
+                <div id="teacherProjects">
+                    <!-- Teacher's view of student projects (will be populated dynamically) -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById("loginButton").addEventListener("click", login);
+        document.getElementById("submitProjectButton").addEventListener("click", submitProject);
+
+        function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const userType = document.getElementById("userType").value;
+
+            fetch("http://localhost:3000/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                    userType: userType
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Invalid credentials");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Handle successful login
+                    console.log("Login successful");
+                    if (data.userType === "student") {
+                        document.getElementById("studentForm").style.display = "block";
+                    } else if (data.userType === "teacher") {
+                        document.getElementById("teacherForm").style.display = "block";
+                        getProjectsByBranch(); // Fetch projects for default branch
+                    }
+                    document.getElementById("login").style.display = "none";
+                    document.getElementById("dashboard").style.display = "block";
+                } else {
+                    // Handle unsuccessful login
+                    console.log("Invalid credentials");
+                    alert("Invalid credentials. Please try again.");
+                }
+            })
+            .catch(error => {
+                // Handle errors
+                console.error("Login error:", error.message);
+                alert("An error occurred while logging in. Please try again.");
+            });
+        }
+
+        function submitProject() {
+            const classValue = document.getElementById("class").value;
+            const branch = document.getElementById("branch").value;
+            const abstract1Title = document.getElementById("abstract1Title").value;
+            const abstract1File = document.getElementById("abstract1File").files[0];
+            const abstract2Title = document.getElementById("abstract2Title").value;
+            const abstract2File = document.getElementById("abstract2File").files[0];
+            const abstract3Title = document.getElementById("abstract3Title").value;
+            const abstract3File = document.getElementById("abstract3File").files[0];
+
+            const formData = new FormData();
+            formData.append("class", classValue);
+            formData.append("branch", branch);
+            formData.append("abstract1Title", abstract1Title);
+            formData.append("abstract1File", abstract1File);
+            formData.append("abstract2Title", abstract2Title);
+            formData.append("abstract2File", abstract2File);
+            formData.append("abstract3Title", abstract3Title);
+            formData.append("abstract3File", abstract3File);
+
+            fetch("http://localhost:3000/submit", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to submit project");
+                }
+                alert("Project submitted successfully!");
+                document.getElementById("projectSubmissionForm").reset();
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while submitting the project. Please try again.");
+            });
+        }
+
+        function getProjectsByBranch() {
+            const branch = document.getElementById("branchSelect").value;
+            fetch(`http://localhost:3000/projects?branch=${branch}`)
+            .then(response => response.json())
+            .then(data => {
+                const teacherProjectsContainer = document.getElementById("teacherProjects");
+                teacherProjectsContainer.innerHTML = "";
+
+                data.forEach(project => {
+                    const projectElement = document.createElement("div");
+                    projectElement.innerHTML = `
+                        <h3>Class: ${project.class}</h3>
+                        <p>Branch: ${project.branch}</p>
+                        <p>Abstract Title 1: ${project.abstract1Title}</p>
+                        <button onclick="downloadFile('${project.abstract1File}')">Download Abstract 1</button>
+                        <p>Abstract Title 2: ${project.abstract2Title}</p>
+                        <button onclick="downloadFile('${project.abstract2File}')">Download Abstract 2</button>
+                        <p>Abstract Title 3: ${project.abstract3Title}</p>
+                        <button onclick="downloadFile('${project.abstract3File}')">Download Abstract 3</button>
+                        <hr>
+                    `;
+                    teacherProjectsContainer.appendChild(projectElement);
+                });
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function downloadFile(filename) {
+            fetch(`http://localhost:3000/abstracts/${filename}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to download file");
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
